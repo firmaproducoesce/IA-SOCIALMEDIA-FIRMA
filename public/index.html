@@ -1,0 +1,1332 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Firma Produções — RUBRA · Planejamento de Eventos</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --red: #cc0000;
+      --red-bright: #ff2020;
+      --red-glow: rgba(204, 0, 0, 0.35);
+      --red-glow-soft: rgba(204, 0, 0, 0.12);
+      --white: #ffffff;
+      --off-white: rgba(255,255,255,0.88);
+      --muted: rgba(255,255,255,0.45);
+      --glass-bg: rgba(255,255,255,0.035);
+      --glass-border: rgba(255,255,255,0.09);
+      --glass-border-hover: rgba(255,255,255,0.18);
+      --input-bg: rgba(255,255,255,0.05);
+      --radius: 20px;
+      --radius-sm: 12px;
+    }
+
+    html, body {
+      height: 100%;
+      background: linear-gradient(160deg, #1a0000 0%, #0a0000 40%, #000000 100%);
+      color: var(--white);
+      font-family: 'Space Grotesk', sans-serif;
+      overflow-x: hidden;
+    }
+
+    /* ── CANVAS BACKGROUND ─────────────────── */
+    #bg-canvas { display: none; }
+
+    /* ── LAYOUT ────────────────────────────── */
+    .app {
+      position: relative;
+      z-index: 1;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 20px 80px;
+    }
+
+    /* ── HEADER ────────────────────────────── */
+    header {
+      text-align: center;
+      margin-bottom: 48px;
+    }
+
+    .logo-svg-wrap {
+      display: inline-block;
+      margin-bottom: 14px;
+    }
+
+    .logo-svg-wrap svg {
+      width: 220px;
+      height: auto;
+      filter: drop-shadow(0 0 18px rgba(204,0,0,0.3));
+    }
+
+    .header-sub {
+      font-size: 12px;
+      color: var(--muted);
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+    }
+
+    /* ── CARD GLASS ────────────────────────── */
+    .card {
+      width: 100%;
+      max-width: 820px;
+      background: var(--glass-bg);
+      backdrop-filter: blur(40px) saturate(160%);
+      -webkit-backdrop-filter: blur(40px) saturate(160%);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius);
+      box-shadow:
+        0 8px 40px rgba(0,0,0,0.6),
+        0 1px 0 rgba(255,255,255,0.08) inset,
+        0 -1px 0 rgba(0,0,0,0.4) inset;
+      overflow: hidden;
+      transition: border-color 0.3s;
+    }
+
+    /* ── STEPS NAV ─────────────────────────── */
+    .steps-nav {
+      display: flex;
+      align-items: center;
+      padding: 24px 28px 0;
+      gap: 0;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .steps-nav::-webkit-scrollbar { display: none; }
+
+    .step-pill {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      border-radius: 100px;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      white-space: nowrap;
+      color: var(--muted);
+      cursor: pointer;
+      transition: all 0.25s;
+      border: 1px solid transparent;
+      background: transparent;
+      flex-shrink: 0;
+    }
+
+    .step-pill:not(:last-child)::after {
+      content: '';
+      display: block;
+      width: 28px;
+      height: 1px;
+      background: rgba(255,255,255,0.12);
+      margin-left: 8px;
+    }
+
+    .step-pill .dot {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      font-weight: 700;
+      flex-shrink: 0;
+      transition: all 0.25s;
+    }
+
+    .step-pill.active {
+      color: var(--white);
+      background: rgba(204,0,0,0.12);
+      border-color: rgba(204,0,0,0.35);
+    }
+    .step-pill.active .dot {
+      background: var(--red);
+      border-color: var(--red-bright);
+      box-shadow: 0 0 10px var(--red-glow);
+      color: white;
+    }
+
+    .step-pill.done { color: rgba(255,255,255,0.55); }
+    .step-pill.done .dot {
+      background: rgba(204,0,0,0.3);
+      border-color: rgba(204,0,0,0.4);
+      color: var(--red-bright);
+    }
+
+    /* ── PROGRESS BAR ──────────────────────── */
+    .progress-bar-wrap {
+      padding: 16px 28px 0;
+    }
+    .progress-bar-bg {
+      height: 2px;
+      background: rgba(255,255,255,0.06);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    .progress-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--red) 0%, var(--red-bright) 100%);
+      border-radius: 2px;
+      transition: width 0.5s cubic-bezier(0.4,0,0.2,1);
+      box-shadow: 0 0 8px var(--red-glow);
+    }
+
+    /* ── FORM BODY ─────────────────────────── */
+    .card-body {
+      padding: 32px 32px 28px;
+    }
+
+    .step-panel { display: none; }
+    .step-panel.visible { display: block; animation: fadeSlide 0.35s ease; }
+
+    @keyframes fadeSlide {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .step-title {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 6px;
+      color: var(--white);
+    }
+
+    .step-desc {
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 28px;
+      line-height: 1.6;
+    }
+
+    /* ── GRID ──────────────────────────────── */
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    @media (max-width: 560px) { .grid-2 { grid-template-columns: 1fr; } }
+
+    /* ── FORM ELEMENTS ─────────────────────── */
+    .field { display: flex; flex-direction: column; gap: 6px; }
+
+    label {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    input[type="text"],
+    input[type="password"],
+    input[type="date"],
+    select,
+    textarea {
+      width: 100%;
+      background: var(--input-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-sm);
+      padding: 12px 16px;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 14px;
+      color: var(--white);
+      outline: none;
+      transition: all 0.2s;
+      resize: none;
+    }
+
+    input[type="text"]:focus,
+    input[type="password"]:focus,
+    input[type="date"]:focus,
+    select:focus,
+    textarea:focus {
+      border-color: rgba(204,0,0,0.5);
+      background: rgba(204,0,0,0.05);
+      box-shadow: 0 0 0 3px rgba(204,0,0,0.1);
+    }
+
+    input[type="text"]::placeholder,
+    textarea::placeholder { color: rgba(255,255,255,0.2); }
+
+    select { cursor: pointer; }
+    select option { background: #111; color: #fff; }
+
+    textarea { min-height: 110px; line-height: 1.6; }
+
+    /* ── TAG INPUT ─────────────────────────── */
+    .tag-wrap {
+      background: var(--input-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-sm);
+      padding: 8px 12px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      min-height: 48px;
+      cursor: text;
+      transition: all 0.2s;
+    }
+    .tag-wrap:focus-within {
+      border-color: rgba(204,0,0,0.5);
+      background: rgba(204,0,0,0.05);
+      box-shadow: 0 0 0 3px rgba(204,0,0,0.1);
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(204,0,0,0.18);
+      border: 1px solid rgba(204,0,0,0.3);
+      border-radius: 6px;
+      padding: 3px 10px 3px 10px;
+      font-size: 12px;
+      font-weight: 500;
+      color: rgba(255,255,255,0.9);
+      animation: tagPop 0.15s ease;
+    }
+    @keyframes tagPop { from { transform: scale(0.85); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+    .tag-del {
+      cursor: pointer;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1;
+      transition: color 0.15s;
+    }
+    .tag-del:hover { color: var(--red-bright); }
+
+    .tag-input-inner {
+      background: transparent;
+      border: none;
+      outline: none;
+      color: var(--white);
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 13px;
+      flex: 1;
+      min-width: 120px;
+    }
+    .tag-input-inner::placeholder { color: rgba(255,255,255,0.18); }
+
+    /* ── DATE CHIPS ────────────────────────── */
+    .date-row { display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: end; }
+
+    .btn-add-date {
+      background: rgba(204,0,0,0.15);
+      border: 1px solid rgba(204,0,0,0.3);
+      border-radius: var(--radius-sm);
+      color: var(--red-bright);
+      padding: 12px 16px;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+    .btn-add-date:hover {
+      background: rgba(204,0,0,0.25);
+      border-color: rgba(204,0,0,0.5);
+    }
+
+    .dates-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 8px;
+    }
+
+    .date-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 8px;
+      padding: 4px 10px;
+      font-size: 12px;
+      color: var(--off-white);
+    }
+    .date-chip-del { cursor: pointer; color: var(--muted); transition: color 0.15s; }
+    .date-chip-del:hover { color: var(--red-bright); }
+
+    /* ── PLATFORM CHECKBOXES ───────────────── */
+    .platforms-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 10px;
+    }
+
+    .plat-label {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 14px;
+      background: var(--input-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: all 0.2s;
+      user-select: none;
+    }
+    .plat-label:hover { border-color: var(--glass-border-hover); }
+
+    .plat-label input[type="checkbox"] { display: none; }
+
+    .plat-box {
+      width: 18px; height: 18px;
+      border-radius: 5px;
+      border: 1.5px solid rgba(255,255,255,0.2);
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.2s;
+      flex-shrink: 0;
+    }
+    .plat-label:has(input:checked) {
+      border-color: rgba(204,0,0,0.5);
+      background: rgba(204,0,0,0.08);
+    }
+    .plat-label:has(input:checked) .plat-box {
+      background: var(--red);
+      border-color: var(--red-bright);
+      box-shadow: 0 0 8px var(--red-glow);
+    }
+    .plat-label:has(input:checked) .plat-box::after {
+      content: '✓';
+      color: white;
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .plat-icon { font-size: 18px; }
+    .plat-name { font-size: 13px; font-weight: 500; }
+
+    /* ── API KEY ───────────────────────────── */
+    .api-field {
+      position: relative;
+    }
+    .api-field input { padding-right: 44px; letter-spacing: 0.03em; }
+    .api-toggle {
+      position: absolute;
+      right: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 16px;
+      padding: 0;
+      line-height: 1;
+      transition: color 0.2s;
+    }
+    .api-toggle:hover { color: var(--white); }
+
+    .api-hint {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 6px;
+      line-height: 1.5;
+    }
+    .api-hint a { color: rgba(204,0,0,0.8); text-decoration: none; }
+    .api-hint a:hover { color: var(--red-bright); }
+
+    /* ── DIVIDER ───────────────────────────── */
+    .divider {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.07), transparent);
+      margin: 24px 0;
+    }
+
+    /* ── NAV BUTTONS ───────────────────────── */
+    .card-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 32px 28px;
+      gap: 12px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 24px;
+      border-radius: 100px;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      border: none;
+      outline: none;
+    }
+
+    .btn-ghost {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      color: var(--muted);
+    }
+    .btn-ghost:hover { background: rgba(255,255,255,0.09); color: var(--white); }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #cc0000 0%, #ff2020 100%);
+      color: white;
+      box-shadow: 0 4px 20px rgba(204,0,0,0.4);
+    }
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 28px rgba(204,0,0,0.5);
+    }
+    .btn-primary:active { transform: translateY(0); }
+
+    .btn-generate {
+      padding: 14px 32px;
+      font-size: 15px;
+      background: linear-gradient(135deg, #aa0000 0%, #ee1111 50%, #ff3333 100%);
+      box-shadow: 0 4px 24px rgba(204,0,0,0.45);
+      letter-spacing: 0.03em;
+    }
+
+    .btn:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+      transform: none !important;
+      box-shadow: none !important;
+    }
+
+    /* ── LOADING OVERLAY ───────────────────── */
+    .overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: rgba(6,6,6,0.92);
+      backdrop-filter: blur(12px);
+    }
+    .overlay.visible { display: flex; }
+
+    .loader-box {
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 28px;
+    }
+
+    .orbit {
+      position: relative;
+      width: 96px;
+      height: 96px;
+    }
+
+    .orbit-ring {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      border: 2px solid transparent;
+    }
+    .orbit-ring-1 {
+      border-top-color: var(--red);
+      border-right-color: rgba(204,0,0,0.2);
+      animation: spin 1.2s linear infinite;
+      box-shadow: 0 0 16px var(--red-glow);
+    }
+    .orbit-ring-2 {
+      inset: 12px;
+      border-top-color: transparent;
+      border-left-color: rgba(204,0,0,0.5);
+      animation: spin 0.8s linear infinite reverse;
+    }
+    .orbit-ring-3 {
+      inset: 24px;
+      border-bottom-color: rgba(204,0,0,0.4);
+      animation: spin 1.6s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .orbit-core {
+      position: absolute;
+      inset: 38px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(204,0,0,0.6), rgba(204,0,0,0.1));
+      animation: pulse-core 1.5s ease-in-out infinite;
+    }
+    @keyframes pulse-core {
+      0%, 100% { transform: scale(1); opacity: 0.7; }
+      50%       { transform: scale(1.3); opacity: 1; }
+    }
+
+    .loader-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--white);
+    }
+
+    .loader-status {
+      font-size: 13px;
+      color: var(--muted);
+      animation: blink 1.5s ease-in-out infinite;
+    }
+    @keyframes blink {
+      0%, 100% { opacity: 0.5; }
+      50%       { opacity: 1; }
+    }
+
+    .loader-steps {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      text-align: left;
+      min-width: 280px;
+    }
+
+    .loader-step {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 12px;
+      color: rgba(255,255,255,0.35);
+      transition: color 0.4s;
+    }
+    .loader-step.done { color: rgba(255,255,255,0.65); }
+    .loader-step.active { color: var(--white); }
+
+    .loader-step-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.15);
+      flex-shrink: 0;
+      transition: all 0.4s;
+    }
+    .loader-step.done .loader-step-dot { background: rgba(204,0,0,0.6); }
+    .loader-step.active .loader-step-dot { background: var(--red-bright); box-shadow: 0 0 8px var(--red-glow); }
+
+    /* ── SUCCESS STATE ─────────────────────── */
+    .success-box {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+      text-align: center;
+      padding: 16px;
+    }
+    .success-box.visible { display: flex; animation: fadeSlide 0.5s ease; }
+
+    .success-icon {
+      width: 72px; height: 72px;
+      border-radius: 50%;
+      background: rgba(204,0,0,0.12);
+      border: 2px solid rgba(204,0,0,0.3);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 32px;
+      box-shadow: 0 0 30px var(--red-glow-soft);
+    }
+
+    .btn-download {
+      background: linear-gradient(135deg, #cc0000 0%, #ff2020 100%);
+      color: white;
+      padding: 14px 36px;
+      font-size: 15px;
+      font-weight: 700;
+      border-radius: 100px;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 4px 24px rgba(204,0,0,0.45);
+      transition: all 0.2s;
+      font-family: 'Space Grotesk', sans-serif;
+      letter-spacing: 0.02em;
+    }
+    .btn-download:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(204,0,0,0.55); }
+
+    .btn-restart {
+      background: none;
+      border: 1px solid rgba(255,255,255,0.12);
+      color: var(--muted);
+      padding: 10px 22px;
+      border-radius: 100px;
+      cursor: pointer;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 13px;
+      transition: all 0.2s;
+    }
+    .btn-restart:hover { border-color: rgba(255,255,255,0.25); color: var(--white); }
+
+    /* ── ERROR TOAST ───────────────────────── */
+    .toast {
+      position: fixed;
+      bottom: 28px;
+      left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: rgba(20,0,0,0.95);
+      border: 1px solid rgba(204,0,0,0.4);
+      border-radius: 12px;
+      padding: 14px 22px;
+      font-size: 13px;
+      color: rgba(255,180,180,0.9);
+      z-index: 200;
+      transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+      backdrop-filter: blur(12px);
+      max-width: 440px;
+      text-align: center;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+
+    /* ── SCROLLBAR ─────────────────────────── */
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
+  </style>
+</head>
+<body>
+
+<canvas id="bg-canvas"></canvas>
+
+<!-- LOADING OVERLAY -->
+<div class="overlay" id="overlay">
+  <div class="loader-box">
+    <div class="orbit">
+      <div class="orbit-ring orbit-ring-1"></div>
+      <div class="orbit-ring orbit-ring-2"></div>
+      <div class="orbit-ring orbit-ring-3"></div>
+      <div class="orbit-core"></div>
+    </div>
+    <div>
+      <div class="loader-title">Firma AI está processando</div>
+      <div class="loader-status" id="loaderStatus">Analisando briefing...</div>
+    </div>
+    <div class="loader-steps" id="loaderSteps">
+      <div class="loader-step" data-step="0"><div class="loader-step-dot"></div> Enviando dados para o Claude</div>
+      <div class="loader-step" data-step="1"><div class="loader-step-dot"></div> Gerando estratégia e cronograma</div>
+      <div class="loader-step" data-step="2"><div class="loader-step-dot"></div> Criando hooks, roteiros e CTAs</div>
+      <div class="loader-step" data-step="3"><div class="loader-step-dot"></div> Montando planilha Excel</div>
+      <div class="loader-step" data-step="4"><div class="loader-step-dot"></div> Finalizando arquivo</div>
+    </div>
+  </div>
+</div>
+
+<div class="app">
+  <!-- HEADER -->
+  <header>
+    <div class="logo-svg-wrap">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2913.293 893.905">
+        <defs><style>.st0{fill:#b34238}.st1{fill:#fff}</style></defs>
+        <polygon class="st1" points="0 627.267 123.323 627.267 123.323 378.844 324.723 378.844 324.723 254.633 123.323 254.633 123.323 129.535 399.25 129.535 399.25 6.211 0 6.211 0 627.267"/>
+        <polygon class="st1" points="528.537 199.589 527.891 627.267 650.327 627.267 649.791 199.589 528.537 199.589"/>
+        <path class="st1" d="M1240.324,302.987c20.101-31.053,30.165-66.098,30.165-105.137,0-26.617-5.184-51.458-15.526-74.526-10.355-23.069-24.26-43.321-41.7-60.775-17.453-17.438-37.707-31.191-60.774-41.255-23.067-10.051-47.619-15.083-73.639-15.083h-251.084v621.056h122.437v-236.889h74.526l168.573,236.889h150.829l-182.769-255.52c32.523-14.779,58.848-37.707,78.963-68.76ZM1124.985,247.093c-14.793,13.903-37.86,20.849-69.205,20.849h-105.579v-138.406h105.579c31.345,0,54.412,6.654,69.205,19.963,14.777,13.308,22.181,29.43,22.181,48.352s-7.404,35.35-22.181,49.242Z"/>
+        <polygon class="st1" points="1816.117 275.927 1538.418 0 1470.1 0 1470.1 627.267 1593.424 627.267 1593.424 226.242 1816.117 448.048 2039.699 226.242 2039.699 627.267 2162.134 627.267 2162.134 0 2094.706 0 1816.117 275.927"/>
+        <path class="st1" d="M2442.051,570.929c9.164-20.407,17.591-39.482,25.285-57.226h236.891l50.57,113.564h135.746L2611.068,0h-52.347l-275.926,627.267h134.857c7.099-17.148,15.22-35.932,24.398-56.338ZM2585.338,246.648l63.879,143.73h-127.761l63.882-143.73Z"/>
+        <circle class="st0" cx="589.164" cy="67.984" r="60.627"/>
+        <path class="st1" d="M1719.657,709.734h-67.769v181.066h20.433v-63.89h43.974c38.542,0,71.134-20.176,71.134-59.235v-.517c0-35.697-26.899-57.424-67.772-57.424ZM1766.736,768.451c0,23.798-19.659,39.835-49.664,39.835h-44.751v-79.671h45.785c29.23,0,48.63,13.453,48.63,39.319v.517Z"/>
+        <path class="st1" d="M2114.148,764.053v-.517c0-14.227-5.175-26.9-13.97-35.694-11.382-11.382-29.23-18.108-51.475-18.108h-77.857v181.066h20.433v-70.357h51.734l52.508,70.357h25.089l-55.613-73.979c28.454-5.173,49.149-22.761,49.149-52.768ZM1991.28,802.078v-73.462h55.87c29.23,0,46.302,13.453,46.302,35.697v.517c0,23.281-19.399,37.248-46.559,37.248h-55.613Z"/>
+        <path class="st1" d="M2389.176,706.629c-55.096,0-92.604,43.717-92.604,93.638v.517c0,49.924,36.991,93.121,92.084,93.121s92.604-43.714,92.604-93.638v-.517c0-49.924-36.991-93.121-92.084-93.121ZM2460.049,800.784c0,41.129-29.487,74.239-70.874,74.239s-71.394-33.626-71.394-74.755v-.517c0-41.126,29.488-74.236,70.874-74.236s71.394,33.626,71.394,74.753v.517Z"/>
+        <rect class="st1" x="2889.498" y="863.64" width="23.795" height="27.159"/>
+        <path class="st1" d="M2785.624,774.513l-55.877-32.261-55.877-32.26c-18.939-10.935-42.614,2.734-42.614,24.603v129.042c0,21.869,23.674,35.538,42.614,24.603l55.877-32.261,55.877-32.26c18.939-10.935,18.939-38.271,0-49.207ZM2757.578,815.735l-38.231,22.073-38.232,22.073c-12.958,7.482-29.157-1.87-29.157-16.833v-88.292c0-14.964,16.198-24.315,29.157-16.834l38.232,22.073,38.231,22.073c12.958,7.482,12.958,26.186,0,33.667Z"/>
+      </svg>
+    </div>
+    <div class="header-sub">Agente de social media · planejamento de cobertura de eventos</div>
+  </header>
+
+  <!-- MAIN CARD -->
+  <div class="card" id="mainCard">
+
+    <!-- STEPS NAV -->
+    <div class="steps-nav" id="stepsNav">
+      <div class="step-pill active" data-step="0">
+        <div class="dot">1</div> Evento
+      </div>
+      <div class="step-pill" data-step="1">
+        <div class="dot">2</div> Briefing
+      </div>
+      <div class="step-pill" data-step="2">
+        <div class="dot">3</div> Datas
+      </div>
+      <div class="step-pill" data-step="3">
+        <div class="dot">4</div> Pessoas
+      </div>
+      <div class="step-pill" data-step="4">
+        <div class="dot">5</div> Plataformas
+      </div>
+      <div class="step-pill" data-step="5">
+        <div class="dot">6</div> Gerar
+      </div>
+    </div>
+
+    <!-- PROGRESS BAR -->
+    <div class="progress-bar-wrap">
+      <div class="progress-bar-bg">
+        <div class="progress-bar-fill" id="progressFill" style="width: 16.6%"></div>
+      </div>
+    </div>
+
+    <!-- FORM BODY -->
+    <div class="card-body">
+
+      <!-- SUCCESS STATE (hidden initially) -->
+      <div class="success-box" id="successBox">
+        <div class="success-icon">✅</div>
+        <div>
+          <div class="step-title" style="margin-bottom:8px">Planejamento gerado!</div>
+          <div class="step-desc" style="margin-bottom:0">Seu Excel com estratégia, cronograma, hooks e CTAs está pronto.</div>
+        </div>
+        <a id="downloadLink" style="display:none"></a>
+        <button class="btn-download" id="downloadBtn" onclick="triggerDownload()">⬇ Baixar Excel</button>
+        <button class="btn-restart" onclick="restart()">← Gerar outro planejamento</button>
+      </div>
+
+      <!-- STEP 0: EVENTO -->
+      <div class="step-panel visible" data-panel="0">
+        <div class="step-title">Informações do Evento</div>
+        <div class="step-desc">Dados básicos para contextualizar o planejamento.</div>
+        <div class="grid-2" style="margin-bottom:16px">
+          <div class="field">
+            <label>Nome do Evento *</label>
+            <input type="text" id="nome" placeholder="Ex: Festival Verão 2025" />
+          </div>
+          <div class="field">
+            <label>Tipo de Evento *</label>
+            <select id="tipo">
+              <option value="">Selecione...</option>
+              <option>Show / Concerto</option>
+              <option>Festival</option>
+              <option>Evento Corporativo</option>
+              <option>Lançamento de Produto</option>
+              <option>Festa / Balada</option>
+              <option>Casamento / Social</option>
+              <option>Conferência / Summit</option>
+              <option>Esportivo</option>
+              <option>Cultural / Expo</option>
+              <option>Outro</option>
+            </select>
+          </div>
+        </div>
+        <div class="grid-2">
+          <div class="field">
+            <label>Local / Venue</label>
+            <input type="text" id="local" placeholder="Ex: Arena SP, São Paulo" />
+          </div>
+          <div class="field">
+            <label>Cliente / Contratante *</label>
+            <input type="text" id="cliente" placeholder="Ex: Empresa XYZ" />
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 1: BRIEFING -->
+      <div class="step-panel" data-panel="1">
+        <div class="step-title">Briefing & Objetivo</div>
+        <div class="step-desc">Descreva o evento com o máximo de detalhes — quanto mais contexto, melhor o planejamento.</div>
+        <div class="field" style="margin-bottom:16px">
+          <label>Briefing Geral *</label>
+          <textarea id="briefing" rows="6" placeholder="Descreva o evento: o que é, o que vai acontecer, atmosfera, público esperado, diferenciais, referências de estética, o que a Firma vai cobrir, objetivos da cobertura..."></textarea>
+        </div>
+        <div class="field">
+          <label>Objetivo Principal da Cobertura</label>
+          <input type="text" id="objetivo" placeholder="Ex: Aumentar alcance orgânico, gerar FOMO, posicionar o cliente como referência..." />
+        </div>
+      </div>
+
+      <!-- STEP 2: DATAS -->
+      <div class="step-panel" data-panel="2">
+        <div class="step-title">Cronograma de Datas</div>
+        <div class="step-desc">Adicione os dias de montagem e os dias do evento para estruturar o cronograma de cobertura.</div>
+
+        <div class="field" style="margin-bottom:20px">
+          <label>Dias de Montagem</label>
+          <div class="date-row">
+            <input type="date" id="dateMontagemPicker" />
+            <button class="btn-add-date" onclick="addDate('montagem')">+ Adicionar</button>
+          </div>
+          <div class="dates-chips" id="montagemChips"></div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="field">
+          <label>Dias do Evento</label>
+          <div class="date-row">
+            <input type="date" id="dateEventoPicker" />
+            <button class="btn-add-date" onclick="addDate('evento')">+ Adicionar</button>
+          </div>
+          <div class="dates-chips" id="eventoChips"></div>
+        </div>
+      </div>
+
+      <!-- STEP 3: PESSOAS -->
+      <div class="step-panel" data-panel="3">
+        <div class="step-title">Pessoas Importantes</div>
+        <div class="step-desc">Digite o nome e pressione <strong>Enter</strong> para adicionar. O Claude vai sugerir como apresentar cada pessoa nas redes.</div>
+        <div class="grid-2">
+          <div class="field">
+            <label>Produtores</label>
+            <div class="tag-wrap" onclick="focusTagInput(this)">
+              <div class="tags" id="tags-produtores"></div>
+              <input class="tag-input-inner" placeholder="Nome + Enter" onkeydown="handleTagKey(event,'produtores')" />
+            </div>
+          </div>
+          <div class="field">
+            <label>Clientes / Contratantes</label>
+            <div class="tag-wrap" onclick="focusTagInput(this)">
+              <div class="tags" id="tags-clientes"></div>
+              <input class="tag-input-inner" placeholder="Nome + Enter" onkeydown="handleTagKey(event,'clientes')" />
+            </div>
+          </div>
+          <div class="field">
+            <label>Artistas / Performers</label>
+            <div class="tag-wrap" onclick="focusTagInput(this)">
+              <div class="tags" id="tags-artistas"></div>
+              <input class="tag-input-inner" placeholder="Nome + Enter" onkeydown="handleTagKey(event,'artistas')" />
+            </div>
+          </div>
+          <div class="field">
+            <label>Outros (parceiros, VIPs...)</label>
+            <div class="tag-wrap" onclick="focusTagInput(this)">
+              <div class="tags" id="tags-outros"></div>
+              <input class="tag-input-inner" placeholder="Nome + Enter" onkeydown="handleTagKey(event,'outros')" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 4: PLATAFORMAS -->
+      <div class="step-panel" data-panel="4">
+        <div class="step-title">Plataformas Alvo</div>
+        <div class="step-desc">Selecione onde a cobertura vai acontecer. O agente vai criar estratégia específica para cada plataforma marcada.</div>
+        <div class="platforms-grid">
+          <label class="plat-label">
+            <input type="checkbox" name="plataforma" value="Instagram" checked />
+            <div class="plat-box"></div>
+            <span class="plat-icon">📸</span>
+            <span class="plat-name">Instagram</span>
+          </label>
+          <label class="plat-label">
+            <input type="checkbox" name="plataforma" value="TikTok" checked />
+            <div class="plat-box"></div>
+            <span class="plat-icon">🎵</span>
+            <span class="plat-name">TikTok</span>
+          </label>
+          <label class="plat-label">
+            <input type="checkbox" name="plataforma" value="YouTube" />
+            <div class="plat-box"></div>
+            <span class="plat-icon">▶️</span>
+            <span class="plat-name">YouTube</span>
+          </label>
+          <label class="plat-label">
+            <input type="checkbox" name="plataforma" value="Facebook" />
+            <div class="plat-box"></div>
+            <span class="plat-icon">👤</span>
+            <span class="plat-name">Facebook</span>
+          </label>
+          <label class="plat-label">
+            <input type="checkbox" name="plataforma" value="LinkedIn" />
+            <div class="plat-box"></div>
+            <span class="plat-icon">💼</span>
+            <span class="plat-name">LinkedIn</span>
+          </label>
+          <label class="plat-label">
+            <input type="checkbox" name="plataforma" value="X (Twitter)" />
+            <div class="plat-box"></div>
+            <span class="plat-icon">𝕏</span>
+            <span class="plat-name">X / Twitter</span>
+          </label>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="field">
+          <label>Observações Adicionais</label>
+          <textarea id="observacoes" rows="3" placeholder="Algo específico que o agente deve saber: restrições, referências de estilo, não pode mostrar X, foco em Y..."></textarea>
+        </div>
+      </div>
+
+      <!-- STEP 5: GERAR -->
+      <div class="step-panel" data-panel="5">
+        <div class="step-title">Gerar Planejamento</div>
+        <div class="step-desc">Cole sua chave da API Anthropic e dispare o agente. O planejamento completo será gerado em Excel.</div>
+
+        <div class="field">
+          <label>Anthropic API Key *</label>
+          <div class="api-field">
+            <input type="password" id="apiKey" placeholder="sk-ant-api03-..." />
+            <button class="api-toggle" onclick="toggleApiVis()" title="Mostrar/ocultar">👁</button>
+          </div>
+          <div class="api-hint">
+            Sua chave fica apenas nesta sessão, nunca é salva.
+            Obtenha em <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div style="background: rgba(204,0,0,0.04); border: 1px solid rgba(204,0,0,0.12); border-radius:12px; padding:16px; font-size:13px; color:rgba(255,255,255,0.55); line-height:1.7;">
+          <strong style="color:rgba(255,255,255,0.75);">O que será gerado:</strong><br/>
+          📋 Resumo geral · 📅 Cronograma por dia · 👥 Como apresentar cada pessoa ·
+          📱 Estratégia por plataforma · 🎬 Hooks de 5s, roteiros e CTAs ·
+          ✅ Checklist de produção · 📊 Métricas e KPIs
+        </div>
+      </div>
+
+    </div><!-- /card-body -->
+
+    <!-- FOOTER NAV -->
+    <div class="card-footer" id="cardFooter">
+      <button class="btn btn-ghost" id="btnBack" onclick="goBack()" style="display:none">← Voltar</button>
+      <div style="flex:1"></div>
+      <button class="btn btn-primary" id="btnNext" onclick="goNext()">Próximo →</button>
+      <button class="btn btn-primary btn-generate" id="btnGenerate" onclick="generate()" style="display:none">⚡ Gerar com IA</button>
+    </div>
+
+  </div><!-- /card -->
+</div><!-- /app -->
+
+<!-- ERROR TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ──────────────────────────────────────────────────────────
+// CANVAS NEURAL NETWORK BACKGROUND
+// ──────────────────────────────────────────────────────────
+(function initCanvas() {
+  const canvas = document.getElementById('bg-canvas');
+  const ctx = canvas.getContext('2d');
+  let W, H, nodes = [], animId;
+
+  function resize() {
+    W = canvas.width = window.innerWidth;
+    H = canvas.height = window.innerHeight;
+  }
+  window.addEventListener('resize', resize);
+  resize();
+
+  const NODE_COUNT = Math.min(55, Math.floor((W * H) / 22000));
+
+  function createNodes() {
+    nodes = [];
+    for (let i = 0; i < NODE_COUNT; i++) {
+      nodes.push({
+        x: Math.random() * W,
+        y: Math.random() * H,
+        vx: (Math.random() - 0.5) * 0.35,
+        vy: (Math.random() - 0.5) * 0.35,
+        r: Math.random() * 2 + 0.8,
+        pulse: Math.random() * Math.PI * 2,
+      });
+    }
+  }
+  createNodes();
+
+  const MAX_DIST = 160;
+
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+
+    const t = Date.now() * 0.001;
+    nodes.forEach(n => {
+      n.x += n.vx;
+      n.y += n.vy;
+      if (n.x < 0 || n.x > W) n.vx *= -1;
+      if (n.y < 0 || n.y > H) n.vy *= -1;
+      n.pulse += 0.016;
+    });
+
+    // Connections — muito sutis para não brigar com vinheta
+    for (let i = 0; i < nodes.length; i++) {
+      for (let j = i + 1; j < nodes.length; j++) {
+        const dx = nodes[i].x - nodes[j].x;
+        const dy = nodes[i].y - nodes[j].y;
+        const dist = Math.sqrt(dx*dx + dy*dy);
+        if (dist < MAX_DIST) {
+          const alpha = (1 - dist / MAX_DIST) * 0.08;
+          ctx.strokeStyle = `rgba(255,60,60,${alpha})`;
+          ctx.lineWidth = 0.5;
+          ctx.beginPath();
+          ctx.moveTo(nodes[i].x, nodes[i].y);
+          ctx.lineTo(nodes[j].x, nodes[j].y);
+          ctx.stroke();
+        }
+      }
+    }
+
+    // Nodes
+    nodes.forEach(n => {
+      const glow = (Math.sin(n.pulse) + 1) * 0.5;
+      const alpha = 0.15 + glow * 0.2;
+      ctx.beginPath();
+      ctx.arc(n.x, n.y, n.r + glow * 0.6, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(255,50,50,${alpha})`;
+      ctx.fill();
+    });
+
+    animId = requestAnimationFrame(draw);
+  }
+  draw();
+})();
+
+// ──────────────────────────────────────────────────────────
+// STATE
+// ──────────────────────────────────────────────────────────
+let currentStep = 0;
+const TOTAL_STEPS = 6;
+const tags = { produtores: [], clientes: [], artistas: [], outros: [] };
+const dates = { montagem: [], evento: [] };
+let downloadBlob = null;
+let downloadFilename = '';
+
+// ──────────────────────────────────────────────────────────
+// NAVIGATION
+// ──────────────────────────────────────────────────────────
+function setStep(step) {
+  document.querySelectorAll('.step-panel').forEach(p => p.classList.remove('visible'));
+  document.querySelector(`[data-panel="${step}"]`)?.classList.add('visible');
+
+  document.querySelectorAll('.step-pill').forEach((p, i) => {
+    p.classList.remove('active', 'done');
+    if (i < step) p.classList.add('done');
+    if (i === step) p.classList.add('active');
+  });
+
+  const pct = ((step + 1) / TOTAL_STEPS) * 100;
+  document.getElementById('progressFill').style.width = pct + '%';
+
+  document.getElementById('btnBack').style.display = step === 0 ? 'none' : '';
+  document.getElementById('btnNext').style.display = step === TOTAL_STEPS - 1 ? 'none' : '';
+  document.getElementById('btnGenerate').style.display = step === TOTAL_STEPS - 1 ? '' : 'none';
+  currentStep = step;
+}
+
+function goNext() {
+  if (!validateStep(currentStep)) return;
+  if (currentStep < TOTAL_STEPS - 1) setStep(currentStep + 1);
+}
+function goBack() {
+  if (currentStep > 0) setStep(currentStep - 1);
+}
+
+function validateStep(step) {
+  if (step === 0) {
+    if (!v('nome')) return err('Informe o nome do evento.');
+    if (!v('tipo')) return err('Selecione o tipo do evento.');
+    if (!v('cliente')) return err('Informe o cliente.');
+  }
+  if (step === 1) {
+    if (!v('briefing')) return err('O briefing não pode estar vazio.');
+  }
+  return true;
+}
+
+function v(id) { return document.getElementById(id)?.value?.trim(); }
+
+// ──────────────────────────────────────────────────────────
+// TAG INPUTS
+// ──────────────────────────────────────────────────────────
+function focusTagInput(wrap) {
+  wrap.querySelector('.tag-input-inner')?.focus();
+}
+
+function handleTagKey(e, group) {
+  if (e.key === 'Enter' || e.key === ',') {
+    e.preventDefault();
+    const input = e.target;
+    const val = input.value.trim().replace(/,+$/, '');
+    if (val && !tags[group].includes(val)) {
+      tags[group].push(val);
+      renderTags(group);
+    }
+    input.value = '';
+  }
+  if (e.key === 'Backspace' && !e.target.value && tags[group].length) {
+    tags[group].pop();
+    renderTags(group);
+  }
+}
+
+function renderTags(group) {
+  const container = document.getElementById(`tags-${group}`);
+  container.innerHTML = tags[group].map((t, i) =>
+    `<span class="tag">${t}<span class="tag-del" onclick="removeTag('${group}',${i})">×</span></span>`
+  ).join('');
+}
+
+function removeTag(group, idx) {
+  tags[group].splice(idx, 1);
+  renderTags(group);
+}
+
+// ──────────────────────────────────────────────────────────
+// DATE CHIPS
+// ──────────────────────────────────────────────────────────
+function addDate(type) {
+  const picker = document.getElementById(type === 'montagem' ? 'dateMontagemPicker' : 'dateEventoPicker');
+  const val = picker.value;
+  if (!val) return;
+  const formatted = formatDate(val);
+  if (!dates[type].includes(formatted)) {
+    dates[type].push(formatted);
+    renderDates(type);
+  }
+  picker.value = '';
+}
+
+function formatDate(dateStr) {
+  const [y, m, d] = dateStr.split('-');
+  return `${d}/${m}/${y}`;
+}
+
+function renderDates(type) {
+  const container = document.getElementById(`${type}Chips`);
+  container.innerHTML = dates[type].map((d, i) =>
+    `<div class="date-chip">📅 ${d} <span class="date-chip-del" onclick="removeDate('${type}',${i})">×</span></div>`
+  ).join('');
+}
+
+function removeDate(type, idx) {
+  dates[type].splice(idx, 1);
+  renderDates(type);
+}
+
+// ──────────────────────────────────────────────────────────
+// API KEY TOGGLE
+// ──────────────────────────────────────────────────────────
+function toggleApiVis() {
+  const input = document.getElementById('apiKey');
+  input.type = input.type === 'password' ? 'text' : 'password';
+}
+
+// ──────────────────────────────────────────────────────────
+// LOADER ANIMATION
+// ──────────────────────────────────────────────────────────
+let loaderInterval = null;
+
+function startLoader() {
+  const steps = document.querySelectorAll('.loader-step');
+  let current = 0;
+
+  const timings = [1200, 2500, 4000, 6000];
+  function advance(idx) {
+    if (idx > 0) steps[idx - 1]?.classList.replace('active', 'done');
+    steps[idx]?.classList.add('active');
+  }
+  advance(0);
+  const timeouts = timings.map((t, i) => setTimeout(() => advance(i + 1), t));
+  loaderInterval = { timeouts };
+}
+
+function stopLoader() {
+  if (loaderInterval) {
+    loaderInterval.timeouts.forEach(clearTimeout);
+    loaderInterval = null;
+  }
+  document.querySelectorAll('.loader-step').forEach(s => {
+    s.classList.remove('active', 'done');
+  });
+}
+
+// ──────────────────────────────────────────────────────────
+// GENERATE
+// ──────────────────────────────────────────────────────────
+async function generate() {
+  const apiKey = v('apiKey');
+  if (!apiKey) return err('Informe sua API Key da Anthropic.');
+  if (!apiKey.startsWith('sk-ant-')) return err('API Key inválida. Deve começar com sk-ant-');
+
+  const plataformas = [...document.querySelectorAll('input[name="plataforma"]:checked')].map(c => c.value);
+  if (plataformas.length === 0) return err('Selecione pelo menos uma plataforma.');
+
+  const eventData = {
+    nome: v('nome'),
+    tipo: v('tipo'),
+    local: v('local'),
+    cliente: v('cliente'),
+    briefing: v('briefing'),
+    objetivo: v('objetivo'),
+    diasMontagem: dates.montagem.join(', ') || 'Não informado',
+    diasEvento: dates.evento.join(', ') || 'Não informado',
+    produtores: tags.produtores.join(', ') || 'Não informado',
+    clientes: tags.clientes.join(', ') || 'Não informado',
+    artistas: tags.artistas.join(', ') || 'Não informado',
+    outros: tags.outros.join(', ') || 'Não informado',
+    plataformas,
+    observacoes: v('observacoes'),
+  };
+
+  // Mostrar overlay
+  document.getElementById('overlay').classList.add('visible');
+  startLoader();
+
+  try {
+    const response = await fetch('/api/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ apiKey, eventData }),
+    });
+
+    if (!response.ok) {
+      const errData = await response.json().catch(() => ({ error: 'Erro desconhecido' }));
+      throw new Error(errData.error || `Erro HTTP ${response.status}`);
+    }
+
+    const blob = await response.blob();
+    downloadBlob = blob;
+    downloadFilename = `Planejamento-Firma-${eventData.nome.replace(/[^a-zA-Z0-9]/g, '-')}.xlsx`;
+
+    // Hide overlay, show success
+    stopLoader();
+    document.getElementById('overlay').classList.remove('visible');
+    showSuccess();
+
+  } catch (e) {
+    stopLoader();
+    document.getElementById('overlay').classList.remove('visible');
+    err(e.message || 'Erro ao gerar planejamento. Tente novamente.');
+  }
+}
+
+function showSuccess() {
+  // Hide all panels and footer
+  document.querySelectorAll('.step-panel').forEach(p => p.style.display = 'none');
+  document.getElementById('cardFooter').style.display = 'none';
+  document.querySelector('.steps-nav').style.display = 'none';
+  document.querySelector('.progress-bar-wrap').style.display = 'none';
+  document.getElementById('successBox').classList.add('visible');
+}
+
+function triggerDownload() {
+  if (!downloadBlob) return;
+  const url = URL.createObjectURL(downloadBlob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = downloadFilename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function restart() {
+  location.reload();
+}
+
+// ──────────────────────────────────────────────────────────
+// TOAST ERROR
+// ──────────────────────────────────────────────────────────
+let toastTimer = null;
+function err(msg) {
+  const toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toast.classList.remove('show'), 4000);
+  return false;
+}
+
+// ──────────────────────────────────────────────────────────
+// INIT
+// ──────────────────────────────────────────────────────────
+setStep(0);
+</script>
+</body>
+</html>
